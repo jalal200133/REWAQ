@@ -1,1 +1,263 @@
 
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101522">
+<title>رِواق | REWAQ</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#101522;--card:#1b2434;--gold:#e4bd67;--green:#174c3c;--muted:#aab2c2}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:white;font-family:Arial,sans-serif}
+header{padding:18px;text-align:center;background:linear-gradient(130deg,#174c3c,#101522)}
+.logo{font-size:30px;color:var(--gold);font-weight:bold}
+header p{color:#ddd}
+nav{display:flex;overflow:auto;position:sticky;top:0;background:#192131;z-index:5}
+nav button{flex:1;min-width:65px;background:none;border:0;color:white;padding:14px 5px;font-size:13px}
+nav button.active{color:var(--gold);border-bottom:2px solid var(--gold)}
+main{max-width:720px;margin:auto;padding:15px}
+.page{display:none}.page.active{display:block}
+.card{background:var(--card);padding:17px;border-radius:15px;margin:12px 0;border:1px solid #303c50}
+h2,h3{color:var(--gold)}
+p{color:var(--muted);line-height:1.7}
+button,.btn{cursor:pointer}
+.action{background:var(--gold);color:#171b24;border:0;padding:12px 17px;border-radius:10px;font-weight:bold}
+.secondary{background:var(--green);color:white;border:0;padding:11px;border-radius:9px}
+input,textarea{width:100%;padding:13px;margin:7px 0;background:#111a29;border:1px solid #39465b;border-radius:9px;color:white}
+.room{display:flex;align-items:center;gap:12px}
+.room .emoji{font-size:32px}
+.room .info{flex:1}
+.tag{font-size:12px;color:#6cdaa4}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.center{text-align:center}
+.avatar{width:75px;height:75px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-size:35px;margin:auto}
+#toast{position:fixed;bottom:20px;left:5%;right:5%;background:#245642;padding:14px;border-radius:10px;display:none;text-align:center;z-index:10}
+footer{text-align:center;padding:20px;color:#8791a3}
+</style>
+</head>
+<body>
+<header>
+ <div class="logo">رِواق | REWAQ</div>
+ <p>مساحتك الاجتماعية.. عالم من التواصل</p>
+</header>
+
+<nav>
+ <button class="active" onclick="go('home',this)">🏠 الرئيسية</button>
+ <button onclick="go('rooms',this)">🎙️ الغرف</button>
+ <button onclick="go('chat',this)">💬 الدردشة</button>
+ <button onclick="go('gifts',this)">🎁 الهدايا</button>
+ <button onclick="go('games',this)">🎮 الألعاب</button>
+ <button onclick="go('profile',this)">👤 حسابي</button>
+</nav>
+
+<main>
+<section id="home" class="page active">
+ <div class="card">
+  <h2>أهلاً بك في رِواق ✨</h2>
+  <p>اكتشف غرفاً جديدة، تعرف على أصدقاء، وشارك لحظاتك.</p>
+  <button class="action" onclick="go('rooms',document.querySelectorAll('nav button')[1])">اكتشف الغرف</button>
+ </div>
+ <h2>الغرف النشطة</h2>
+ <div id="homeRooms"></div>
+ <div class="card center">
+  <h3>عالم رِواق يجمعنا ❤️</h3>
+  <p>تواصل، استمتع، واصنع ذكريات جديدة.</p>
+ </div>
+</section>
+
+<section id="rooms" class="page">
+ <h2>🎙️ الغرف الصوتية</h2>
+ <p>اكتشف الغرف وانضم إلى مجتمعك.</p>
+ <div id="roomList"></div>
+ <div class="card">
+  <h3>إنشاء غرفة جديدة</h3>
+  <input id="roomName" placeholder="اسم الغرفة">
+  <input id="roomDesc" placeholder="وصف الغرفة">
+  <button class="action" onclick="createRoom()">إنشاء الغرفة</button>
+ </div>
+</section>
+
+<section id="chat" class="page">
+ <h2>💬 الدردشة</h2>
+ <div class="card">
+  <div id="messages"><p>مرحباً بك في دردشة رِواق.</p></div>
+  <input id="chatInput" placeholder="اكتب رسالتك">
+  <button class="action" onclick="sendMessage()">إرسال</button>
+ </div>
+</section>
+
+<section id="gifts" class="page">
+ <h2>🎁 متجر الهدايا</h2>
+ <p>اختر هدية لإرسالها إلى أصدقائك.</p>
+ <div class="grid">
+  <div class="card center"><div style="font-size:40px">🌹</div><h3>وردة</h3><button class="action" onclick="gift('وردة')">إرسال</button></div>
+  <div class="card center"><div style="font-size:40px">❤️</div><h3>قلب</h3><button class="action" onclick="gift('قلب')">إرسال</button></div>
+  <div class="card center"><div style="font-size:40px">👑</div><h3>تاج</h3><button class="action" onclick="gift('تاج')">إرسال</button></div>
+  <div class="card center"><div style="font-size:40px">💎</div><h3>ماسة</h3><button class="action" onclick="gift('ماسة')">إرسال</button></div>
+ </div>
+</section>
+
+<section id="games" class="page">
+ <h2>🎮 الألعاب</h2>
+ <div class="card center">
+  <h3>🎲 لعبة تخمين الرقم</h3>
+  <p>اختر رقماً من 1 إلى 5.</p>
+  <div class="grid">
+   <button class="action" onclick="guess(1)">1</button>
+   <button class="action" onclick="guess(2)">2</button>
+   <button class="action" onclick="guess(3)">3</button>
+   <button class="action" onclick="guess(4)">4</button>
+   <button class="action" onclick="guess(5)">5</button>
+  </div>
+  <p id="gameResult"></p>
+ </div>
+</section>
+
+<section id="profile" class="page">
+ <h2>👤 حسابي الشخصي</h2>
+ <div class="card center">
+  <div class="avatar">👤</div>
+  <h3 id="profileName">عضو رِواق</h3>
+  <p id="accountStatus">حساب محلي تجريبي</p>
+ </div>
+ <div class="card">
+  <h3>تعديل الملف الشخصي</h3>
+  <input id="name" placeholder="اسم المستخدم">
+  <input id="bio" placeholder="نبذة عنك">
+  <button class="action" onclick="saveProfile()">حفظ الملف الشخصي</button>
+ </div>
+ <div class="card">
+  <h3>🔐 الحساب</h3>
+  <input id="email" type="email" placeholder="البريد الإلكتروني">
+  <input id="password" type="password" placeholder="كلمة المرور">
+  <button class="action" onclick="auth('signup')">إنشاء حساب</button>
+  <button class="secondary" onclick="auth('login')">تسجيل الدخول</button>
+  <button class="secondary" onclick="logout()">تسجيل الخروج</button>
+ </div>
+</section>
+
+<section id="admin" class="page">
+ <h2>⚙️ إدارة رِواق</h2>
+ <div class="card">
+  <h3>لوحة الإدارة</h3>
+  <p>هذه واجهة إدارية أولية. صلاحيات المشرفين يجب التحقق منها في الخادم.</p>
+  <button class="secondary" onclick="notify('يلزم إعداد صلاحيات الإدارة في قاعدة البيانات')">إعداد الإدارة</button>
+ </div>
+</section>
+</main>
+
+<footer>رِواق | REWAQ © 2026</footer>
+<div id="toast"></div>
+
+<script>
+// إعداد Supabase: أضف عنوان مشروعك ومفتاحه العام anon/publishable.
+// لا تضع مفتاح service_role أو أي سر داخل هذا الملف.
+const SUPABASE_URL = "ضع_رابط_مشروعك_هنا";
+const SUPABASE_KEY = "ضع_المفتاح_العام_هنا";
+
+let db = null;
+if(window.supabase && SUPABASE_URL.startsWith("https://") &&
+   SUPABASE_KEY.startsWith("eyJ")){
+ db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+}
+
+let rooms = JSON.parse(localStorage.getItem("rewaq_rooms") || "null") || [
+ {name:"غرفة رِواق",desc:"غرفة الأصدقاء والتعارف",emoji:"🎙️"},
+ {name:"ليالي السمر",desc:"أحاديث وجلسات ممتعة",emoji:"🌙"},
+ {name:"ملتقى الأصدقاء",desc:"تعرف على أصدقاء جدد",emoji:"⭐"}
+];
+
+function notify(t){
+ let el=document.getElementById("toast");
+ el.textContent=t;el.style.display="block";
+ setTimeout(()=>el.style.display="none",2500);
+}
+function go(id,btn){
+ document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+ document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+ if(btn)btn.classList.add("active");
+}
+function renderRooms(){
+ let html=rooms.map((r,i)=>`
+ <div class="card room">
+ <div class="emoji">${r.emoji}</div>
+ <div class="info"><h3>${escapeHTML(r.name)}</h3><p>${escapeHTML(r.desc)}</p><span class="tag">● غرفة متاحة</span></div>
+ <button class="action" onclick="joinRoom(${i})">دخول</button>
+ </div>`).join("");
+ document.getElementById("roomList").innerHTML=html;
+ document.getElementById("homeRooms").innerHTML=html;
+}
+function escapeHTML(s){
+ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function createRoom(){
+ let n=document.getElementById("roomName").value.trim();
+ let d=document.getElementById("roomDesc").value.trim();
+ if(!n)return notify("اكتب اسم الغرفة");
+ rooms.unshift({name:n,desc:d,emoji:"🎙️"});
+ localStorage.setItem("rewaq_rooms",JSON.stringify(rooms));
+ renderRooms();notify("تمت إضافة الغرفة محلياً");
+ document.getElementById("roomName").value="";
+ document.getElementById("roomDesc").value="";
+}
+function joinRoom(i){
+ notify("تم اختيار "+rooms[i].name+". الصوت الحقيقي يحتاج خادم LiveKit ورمز دخول آمن.");
+}
+function sendMessage(){
+ let input=document.getElementById("chatInput");
+ if(!input.value.trim())return;
+ let p=document.createElement("p");
+ p.textContent="أنت: "+input.value;
+ document.getElementById("messages").appendChild(p);
+ input.value="";
+}
+function gift(n){notify("اخترت هدية "+n+". الإرسال والخصم يحتاجان ربط قاعدة البيانات والمحفظة.");}
+function guess(n){
+ let answer=Math.floor(Math.random()*5)+1;
+ document.getElementById("gameResult").textContent=
+ n===answer?"🎉 أحسنت! إجابة صحيحة":"حاول مجدداً. الرقم كان "+answer;
+}
+function saveProfile(){
+ let n=document.getElementById("name").value.trim();
+ if(!n)return notify("اكتب اسمك");
+ localStorage.setItem("rewaq_name",n);
+ localStorage.setItem("rewaq_bio",document.getElementById("bio").value);
+ loadProfile();notify("تم الحفظ على هذا الجهاز");
+}
+function loadProfile(){
+ let n=localStorage.getItem("rewaq_name");
+ if(n){
+ document.getElementById("profileName").textContent=n;
+ document.getElementById("name").value=n;
+ document.getElementById("bio").value=localStorage.getItem("rewaq_bio")||"";
+ }
+}
+async function auth(type){
+ if(!db)return notify("يجب إعداد عنوان Supabase والمفتاح العام أولاً");
+ let email=document.getElementById("email").value.trim();
+ let password=document.getElementById("password").value;
+ if(!email||!password)return notify("أدخل البريد وكلمة المرور");
+ let result=type==="signup"
+ ? await db.auth.signUp({email,password})
+ : await db.auth.signInWithPassword({email,password});
+ if(result.error)return notify(result.error.message);
+ document.getElementById("accountStatus").textContent="تم الاتصال بالحساب";
+ notify(type==="signup"?"تم إنشاء الحساب. تحقق من بريدك إذا طُلب ذلك":"تم تسجيل الدخول");
+}
+async function logout(){
+ if(db)await db.auth.signOut();
+ document.getElementById("accountStatus").textContent="غير مسجل الدخول";
+ notify("تم تسجيل الخروج");
+}
+if(db){
+ db.auth.getSession().then(({data})=>{
+  if(data.session)document.getElementById("accountStatus").textContent="متصل بحساب Supabase";
+ });
+}
+renderRooms();loadProfile();
+</script>
+</body>
+</html>
